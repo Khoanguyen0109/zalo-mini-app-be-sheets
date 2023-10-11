@@ -1,4 +1,3 @@
-import { Request, Response, NextFunction } from 'express';
 import { GoogleSpreadsheetWorksheet } from 'google-spreadsheet';
 
 import { getDoc } from 'services/sheet';
