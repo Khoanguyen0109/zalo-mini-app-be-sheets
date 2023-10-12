@@ -3,7 +3,7 @@ import { GoogleSpreadsheetWorksheet } from 'google-spreadsheet';
 
 import { getDoc } from 'services/sheet';
 import { fullTextSearch } from 'utils';
-
+import { isNumber } from 'lodash';
 export async function getProducts(req, res, next) {
   const { query, name, offset, limit, categories } = req.query;
   const errors = validationResult(req);
@@ -12,22 +12,27 @@ export async function getProducts(req, res, next) {
     res.status(422).json({ errors: errors.array() });
     return;
   }
+
   const sheet = (await getDoc('products')) as GoogleSpreadsheetWorksheet;
   let data = [];
-  switch (true) {
-    case Boolean(query):
-      const array = await sheet.getRows();
-      data = fullTextSearch(array, query);
-      break;
-    case Boolean(categories):
-      data = (await sheet.getRows()).filter((item) => item.get('category_id'));
-      break;
-    default:
-      data = await sheet.getRows({ offset: offset, limit: limit });
-      break;
+  const total = sheet?.gridProperties?.rowCount - 1;
+  if (total) {
+    switch (true) {
+      case Boolean(query):
+        const array = await sheet.getRows();
+        data = fullTextSearch(array, query);
+        break;
+      case Boolean(categories):
+        data = (await sheet.getRows()).filter((item) => item.get('category_id'));
+        break;
+      case isNumber(offset) && isNumber(limit):
+        data = await sheet.getRows({ offset: offset, limit: limit });
+        break;
+      default:
+        data = await sheet.getRows();
+        break;
+    }
   }
-
-  const total = sheet.gridProperties.rowCount;
 
   return res.status(200).json({ data, total });
 }
