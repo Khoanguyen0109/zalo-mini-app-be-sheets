@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDoc } from 'services/sheet';
 import { fullTextSearch } from 'utils';
 import getCurrentDateWithTimezone from 'utils/getCurrentDayFormatTimezone';
+import { mapProduct } from 'services/products';
 
 export async function getOrders(req, res) {
   const { query, offset, limit } = req.query;
@@ -33,7 +34,7 @@ export async function getOrders(req, res) {
 
 export async function getOrdersByUser(req, res) {
   const { userId } = req.params;
-  const { query, offset, limit } = req.query;
+  const { query, offset = 0, limit = 10 } = req.query;
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -42,22 +43,23 @@ export async function getOrdersByUser(req, res) {
   }
   const sheet = (await getDoc('orders')) as GoogleSpreadsheetWorksheet;
   let data = [];
-  switch (true) {
-    case Boolean(query):
-      const array = await sheet.getRows();
-      data = fullTextSearch(array, query);
-      break;
-    default:
-      data = await sheet.getRows({ offset: offset, limit: limit });
-      break;
-  }
+
+  // switch (true) {
+  //   case Boolean(query):
+  //     const array = await sheet.getRows();
+  //     data = fullTextSearch(array, query);
+  //     break;
+  //   default:
+  data = await sheet.getRows({ offset: offset, limit: limit });
+  //     break;
+  // }
   const total = sheet.gridProperties.rowCount;
 
-  return res.status(200).json({ data, total });
+  return res.status(200).json({ data: data.map((item) => mapProduct(item)), total });
 }
 
 export async function getOrderDetail(req, res, next) {
-  const { id } = req.params;
+  const { orderId } = req.params;
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(422).json({ errors: errors.array() });
@@ -66,25 +68,44 @@ export async function getOrderDetail(req, res, next) {
   const sheet = (await getDoc('orders')) as GoogleSpreadsheetWorksheet;
 
   const array = await sheet.getRows();
-  const doc = array.find((item) => item.get('id') === id);
+  const doc = array.find((item) => item.get('id') === orderId);
   if (doc) {
     const sheetDetail = (await getDoc('order_details')) as GoogleSpreadsheetWorksheet;
     const arrayDetail = await sheetDetail.getRows();
 
-    const detail = arrayDetail.filter((item) => item.get('product_id') === id);
-    return res.status(200).json({ data: { ...doc, detail: detail } });
+    const detail = arrayDetail.filter((item) => item.get('order_id') === orderId);
+    return res
+      .status(200)
+      .json({
+        data: {
+          ...doc.toObject(),
+          detail: detail.map((item) => ({ product: item.toObject(), quantity: item.get('quantity') })),
+        },
+      });
   }
   return res.status(404).json({ message: 'Not Found' });
 }
 
 export async function createOrder(req, res, next) {
-  const { user_id, discount_id, items } = req.body;
+  const { orderId: orderIdParams , userId, discountId, items, user, total } = req.body;
+  const orderId = orderIdParams || uuidv4()
+  const sheetUser = (await getDoc('users')) as GoogleSpreadsheetWorksheet;
+  const userExist = (await sheetUser.getRows()).find((item) => item.get('id') === userId);
+  if (!userExist) {
+    await sheetUser.addRow({
+      id: user.id,
+      name: user.name,
+      idByOA: user.idByOA,
+      phone: user?.phone,
+    });
+  }
+
   const sheet = (await getDoc('orders')) as GoogleSpreadsheetWorksheet;
-  const orderId = uuidv4();
   const row = {
     id: orderId,
-    user_id,
-    discount_id,
+    user_id: userId,
+    discount_id: discountId,
+    total,
     created_at: getCurrentDateWithTimezone(),
   };
 
@@ -93,10 +114,10 @@ export async function createOrder(req, res, next) {
     id: uuidv4(),
     created_at: getCurrentDateWithTimezone(),
     order_id: orderId,
-    user_id,
+    user_id: userId,
     ...item,
   }));
-  const sheetDetail =  (await getDoc('order_details')) as GoogleSpreadsheetWorksheet;
+  const sheetDetail = (await getDoc('order_details')) as GoogleSpreadsheetWorksheet;
   await sheetDetail.addRows(orderDetail);
 
   return res.status(200).json({ data: 'success' });

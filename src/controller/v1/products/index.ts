@@ -4,6 +4,7 @@ import { GoogleSpreadsheetWorksheet } from 'google-spreadsheet';
 import { getDoc } from 'services/sheet';
 import { fullTextSearch } from 'utils';
 import { isNumber } from 'lodash';
+import { mapProduct } from 'services/products';
 export async function getProducts(req, res, next) {
   const { query, name, offset, limit, categories } = req.query;
   const errors = validationResult(req);
@@ -34,7 +35,7 @@ export async function getProducts(req, res, next) {
     }
   }
 
-  return res.status(200).json({ data, total });
+  return res.status(200).json({ data: data.map((item) => mapProduct(item)), total });
 }
 
 export async function getProductDetail(req, res, next) {
