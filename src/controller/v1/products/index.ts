@@ -4,7 +4,8 @@ import { GoogleSpreadsheetWorksheet } from 'google-spreadsheet';
 import { getDoc } from 'services/sheet';
 import { fullTextSearch } from 'utils';
 import { isNumber } from 'lodash';
-import { mapProduct } from 'services/products';
+import { mapArray, mapProduct } from 'services/products';
+import { omit } from 'lodash';
 export async function getProducts(req, res, next) {
   const { query, name, offset, limit, categories } = req.query;
   const errors = validationResult(req);
@@ -54,7 +55,45 @@ export async function getProductDetail(req, res, next) {
     const arrayDetail = await sheetDetail.getRows();
 
     const detail = arrayDetail.filter((item) => item.get('product_id') === id);
-    return res.status(200).json({ data: { ...doc, inventories: detail } });
+    const groupVariants = detail.reduce((acc, item) => {
+      const object = omit(item.toObject(), [
+        'id',
+        'product_id',
+        'inventory_quantity',
+        'discount',
+        'price',
+        'image',
+        'active',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+      ]);
+
+      for (const [key, value] of Object.entries(object)) {
+        if (value !== '') {
+          if (acc[key]) {
+            if (!acc[key].includes(value)) {
+              acc[key].push(value);
+            }
+          } else {
+            acc[key] = [value];
+          }
+        }
+      }
+
+      return acc;
+    }, {});
+    return res.status(200).json({
+      data: {
+        ...doc.toObject(),
+        image: doc
+          .get('image')
+          .split(',')
+          .map((item) => ({ image: item })),
+        inventories: mapArray(detail),
+        variants: groupVariants,
+      },
+    });
   }
   return res.status(404).json({ message: 'Not Found' });
 }
