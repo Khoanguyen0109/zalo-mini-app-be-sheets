@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import { GoogleSpreadsheetWorksheet } from 'google-spreadsheet';
 import { v4 as uuidv4 } from 'uuid';
+import { nanoid } from 'nanoid';
 
 import { getDoc } from 'services/sheet';
 import { fullTextSearch } from 'utils';
@@ -42,17 +43,9 @@ export async function getOrdersByUser(req, res) {
     return;
   }
   const sheet = (await getDoc('orders')) as GoogleSpreadsheetWorksheet;
-  let data = [];
 
-  // switch (true) {
-  //   case Boolean(query):
-  //     const array = await sheet.getRows();
-  //     data = fullTextSearch(array, query);
-  //     break;
-  //   default:
-  data = await sheet.getRows({ offset: offset, limit: limit });
-  //     break;
-  // }
+  const data = (await sheet.getRows()).filter((item) => item.get('user_id') === userId);
+
   const total = sheet.gridProperties.rowCount;
 
   return res.status(200).json({ data: data.map((item) => mapProduct(item)), total });
@@ -74,21 +67,19 @@ export async function getOrderDetail(req, res, next) {
     const arrayDetail = await sheetDetail.getRows();
 
     const detail = arrayDetail.filter((item) => item.get('order_id') === orderId);
-    return res
-      .status(200)
-      .json({
-        data: {
-          ...doc.toObject(),
-          detail: detail.map((item) => ({ product: item.toObject(), quantity: item.get('quantity') })),
-        },
-      });
+    return res.status(200).json({
+      data: {
+        ...doc.toObject(),
+        detail: detail.map((item) => ({ product: item.toObject(), quantity: item.get('quantity') })),
+      },
+    });
   }
   return res.status(404).json({ message: 'Not Found' });
 }
 
 export async function createOrder(req, res, next) {
-  const { orderId: orderIdParams , userId, discountId, items, user, total } = req.body;
-  const orderId = orderIdParams || uuidv4()
+  const { orderId: orderIdParams, userId, discountId, items, user, total, paymentMethod, address, note } = req.body;
+  const orderId = orderIdParams || nanoid();
   const sheetUser = (await getDoc('users')) as GoogleSpreadsheetWorksheet;
   const userExist = (await sheetUser.getRows()).find((item) => item.get('id') === userId);
   if (!userExist) {
@@ -106,6 +97,9 @@ export async function createOrder(req, res, next) {
     user_id: userId,
     discount_id: discountId,
     total,
+    payment_method: paymentMethod,
+    note,
+    address,
     created_at: getCurrentDateWithTimezone(),
   };
 
