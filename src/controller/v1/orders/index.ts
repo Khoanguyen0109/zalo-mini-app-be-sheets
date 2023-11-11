@@ -78,7 +78,7 @@ export async function getOrderDetail(req, res, next) {
 }
 
 export async function createOrder(req, res, next) {
-  const { orderId: orderIdParams, userId, discountId, items, user, total, paymentMethod, address, note } = req.body;
+  const { orderId: orderIdParams, userId, discountId, items, user, total, paymentMethod, addressId, note } = req.body;
   const orderId = orderIdParams || nanoid();
   const sheetUser = (await getDoc('users')) as GoogleSpreadsheetWorksheet;
   const userExist = (await sheetUser.getRows()).find((item) => item.get('id') === userId);
@@ -97,10 +97,14 @@ export async function createOrder(req, res, next) {
     user_id: userId,
     discount_id: discountId,
     total,
+    thumbnail: items[0]?.thumbnail,
+    thumbnail_name: items[0]?.name,
+    thumbnail_price: items[0]?.total,
     payment_method: paymentMethod,
     note,
-    address,
+    address_id: addressId,
     created_at: getCurrentDateWithTimezone(),
+    status: 'waiting'
   };
 
   await sheet.addRow(row);
