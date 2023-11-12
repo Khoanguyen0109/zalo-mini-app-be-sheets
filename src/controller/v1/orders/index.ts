@@ -59,18 +59,21 @@ export async function getOrderDetail(req, res, next) {
     return;
   }
   const sheet = (await getDoc('orders')) as GoogleSpreadsheetWorksheet;
+  const sheetAddress = (await getDoc('user_addresses')) as GoogleSpreadsheetWorksheet;
 
   const array = await sheet.getRows();
   const doc = array.find((item) => item.get('id') === orderId);
   if (doc) {
     const sheetDetail = (await getDoc('order_details')) as GoogleSpreadsheetWorksheet;
     const arrayDetail = await sheetDetail.getRows();
-
+    const arrayAddress = await sheetAddress.getRows();
+    const address = arrayAddress.find((item) => item.get('id') === doc.get('address_id')).toObject();
     const detail = arrayDetail.filter((item) => item.get('order_id') === orderId);
     return res.status(200).json({
       data: {
         ...doc.toObject(),
         detail: detail.map((item) => ({ product: item.toObject(), quantity: item.get('quantity') })),
+        address,
       },
     });
   }
@@ -104,7 +107,7 @@ export async function createOrder(req, res, next) {
     note,
     address_id: addressId,
     created_at: getCurrentDateWithTimezone(),
-    status: 'waiting'
+    status: 'waiting',
   };
 
   await sheet.addRow(row);
