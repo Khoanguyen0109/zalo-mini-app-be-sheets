@@ -80,9 +80,12 @@ export async function getOrderDetail(req, res, next) {
   return res.status(404).json({ message: 'Not Found' });
 }
 
+async function updateInventory(sheet) {}
+
 export async function createOrder(req, res, next) {
   const { orderId: orderIdParams, userId, discountId, items, user, total, paymentMethod, addressId, note } = req.body;
   const orderId = orderIdParams || nanoid();
+
   const sheetUser = (await getDoc('users')) as GoogleSpreadsheetWorksheet;
   const userExist = (await sheetUser.getRows()).find((item) => item.get('id') === userId);
   if (!userExist) {
@@ -105,6 +108,7 @@ export async function createOrder(req, res, next) {
     thumbnail_price: items[0]?.total,
     payment_method: paymentMethod,
     note,
+    item_quantity: items.length,
     address_id: addressId,
     created_at: getCurrentDateWithTimezone(),
     status: 'waiting',
@@ -119,6 +123,24 @@ export async function createOrder(req, res, next) {
     ...item,
   }));
   const sheetDetail = (await getDoc('order_details')) as GoogleSpreadsheetWorksheet;
+  const sheetInventory = (await getDoc('product_inventories')) as GoogleSpreadsheetWorksheet;
+  const rowsInventory = await sheetInventory.getRows();
+  items.forEach(async (item) => {
+    if (item.inventory_id) {
+      console.log('item.inventory_id', item.inventory_id);
+      const inventoryIndex = rowsInventory.findIndex(
+        (inventory) => inventory.get('id').toString() === item.inventory_id,
+      );
+      if (inventoryIndex !== -1) {
+        rowsInventory[inventoryIndex].set(
+          'inventory_quantity',
+          parseInt(rowsInventory[inventoryIndex].get('inventory_quantity')) - parseInt(item?.quantity),
+        );
+      }
+      rowsInventory[inventoryIndex].save();
+    }
+  });
+
   await sheetDetail.addRows(orderDetail);
 
   return res.status(200).json({ data: 'success' });
