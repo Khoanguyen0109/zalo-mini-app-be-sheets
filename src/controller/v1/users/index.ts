@@ -49,3 +49,17 @@ export async function updateUserAddress(req, res, next) {
   await rows[dataIndex].save();
   return res.status(200).json({ data: { ...rows[dataIndex].toObject(), ...req.body } });
 }
+
+export async function feedback(req, res, next) {
+  const { userId } = req.params;
+  const { issue, note } = req.body;
+  const sheet = (await getDoc('feedback')) as GoogleSpreadsheetWorksheet;
+  const row = {
+    id: uuidv4(),
+    user_id: userId,
+    issue,
+    note,
+  };
+  await sheet.addRow(row);
+  return res.status(200).json({ data: row });
+}
