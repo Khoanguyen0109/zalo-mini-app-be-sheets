@@ -145,3 +145,19 @@ export async function createOrder(req, res, next) {
 
   return res.status(200).json({ data: 'success' });
 }
+
+export async function ratingOrder(req, res, next) {
+  const { userId, orderId } = req.params;
+  const { rating } = req.body;
+
+  const sheet = (await getDoc('orders')) as GoogleSpreadsheetWorksheet;
+
+  const array = await sheet.getRows();
+  const index = array.findIndex((item) => item.get('id') === orderId);
+  if (index < 0) {
+    return res.status(400).json({ data: 'not found' });
+  }
+  array[index].set('rating', rating);
+  await array[index].save(); // save updates on a row
+  return res.status(200).json({ data: 'success' });
+}
