@@ -63,3 +63,12 @@ export async function feedback(req, res, next) {
   await sheet.addRow(row);
   return res.status(200).json({ data: row });
 }
+
+export async function getNotification(req, res, next) {
+  const { userId } = req.params;
+  const sheet = (await getDoc('noti')) as GoogleSpreadsheetWorksheet;
+  const data = (await sheet.getRows())
+    .filter((item) => item.get('user_id') === userId && item.get('status') === 'actived')
+    .map((item) => item.toObject());
+  return res.status(200).json({ data: data });
+}
