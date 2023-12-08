@@ -8,6 +8,10 @@ const router = Router();
 
 router.use(`/v1`, v1);
 
+router.post('/webhook-zalo', (req, res) => {
+  return res.status(200);
+});
+
 router.use(pageRoot);
 router.use(page404);
 

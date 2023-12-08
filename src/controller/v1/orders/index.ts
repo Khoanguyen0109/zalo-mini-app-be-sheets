@@ -149,7 +149,7 @@ export async function createOrder(req, res, next) {
 export async function ratingOrder(req, res, next) {
   const { userId, orderId } = req.params;
   const { rating } = req.body;
-
+  console.log('rating', rating)
   const sheet = (await getDoc('orders')) as GoogleSpreadsheetWorksheet;
 
   const array = await sheet.getRows();
