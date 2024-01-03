@@ -6,6 +6,13 @@ import { getDoc } from 'services/sheet';
 import { STATUS } from 'utils/constants';
 import getCurrentDateWithTimezone from 'utils/getCurrentDayFormatTimezone';
 
+export async function getUserInfo(req, res, next) {
+  const { userId } = req.params;
+  const sheet = (await getDoc('user')) as GoogleSpreadsheetWorksheet;
+  const data = (await sheet.getRows()).filter((item) => item.get('id') === userId).map((item) => item.toObject());
+  return res.status(200).json({ data });
+}
+
 export async function addUserAddress(req, res, next) {
   const { userId } = req.params;
   const { address, province, district, ward, phone, name, type } = req.body;
@@ -75,14 +82,25 @@ export async function getNotification(req, res, next) {
 
 export async function updateCTVIdForUser(req, res, next) {
   const { userId } = req.params;
-  const { ctvId } = req.body;
+  const { ctvId, user } = req.body;
   const sheet = (await getDoc('users')) as GoogleSpreadsheetWorksheet;
   const rows = await sheet.getRows();
   const dataIndex = rows.findIndex((item) => item.get('id') === userId && item.get('id') === userId);
-  if (!rows[dataIndex].get('id_ctv_shared') && userId !== ctvId) {
-    rows[dataIndex].set('id_ctv_shared', ctvId);
-    await rows[dataIndex].save();
+  if (dataIndex !== -1) {
+    if (!rows[dataIndex].get('id_ctv_shared') && userId !== ctvId) {
+      rows[dataIndex].set('id_ctv_shared', ctvId);
+      await rows[dataIndex].save();
+    }
+  } else {
+    await sheet.addRow({
+      id: user.id,
+      name: user.name,
+      idByOA: user.idByOA,
+      phone: user?.phone,
+      id_ctv_shared: ctvId,
+    });
   }
+
   // save updates on a row
   return res.status(200).json({ data: 'success' });
 }
