@@ -79,7 +79,7 @@ export async function updateCTVIdForUser(req, res, next) {
   const sheet = (await getDoc('users')) as GoogleSpreadsheetWorksheet;
   const rows = await sheet.getRows();
   const dataIndex = rows.findIndex((item) => item.get('id') === userId && item.get('id') === userId);
-  if (!rows[dataIndex].get('id_ctv_shared')) {
+  if (!rows[dataIndex].get('id_ctv_shared') && userId !== ctvId) {
     rows[dataIndex].set('id_ctv_shared', ctvId);
     await rows[dataIndex].save();
   }
