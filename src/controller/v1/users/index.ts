@@ -72,3 +72,16 @@ export async function getNotification(req, res, next) {
     .map((item) => item.toObject());
   return res.status(200).json({ data: data });
 }
+
+export async function updateCTVIdForUser(req, res, next) {
+  const { userId } = req.params;
+  const { ctvId } = req.body;
+  const sheet = (await getDoc('users')) as GoogleSpreadsheetWorksheet;
+  const rows = await sheet.getRows();
+  const dataIndex = rows.findIndex((item) => item.get('id') === userId && item.get('id') === userId);
+
+  rows[dataIndex].set('id_ctv_shared', ctvId);
+  await rows[dataIndex].save(); // save updates on a row
+  return res.status(200).json({ data: 'success' });
+}
+
