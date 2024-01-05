@@ -123,23 +123,23 @@ export async function createOrder(req, res, next) {
     ...item,
   }));
   const sheetDetail = (await getDoc('order_details')) as GoogleSpreadsheetWorksheet;
-  const sheetInventory = (await getDoc('product_inventories')) as GoogleSpreadsheetWorksheet;
-  const rowsInventory = await sheetInventory.getRows();
-  items.forEach(async (item) => {
-    if (item.inventory_id) {
-      console.log('item.inventory_id', item.inventory_id);
-      const inventoryIndex = rowsInventory.findIndex(
-        (inventory) => inventory.get('id').toString() === item.inventory_id,
-      );
-      if (inventoryIndex !== -1) {
-        rowsInventory[inventoryIndex].set(
-          'inventory_quantity',
-          parseInt(rowsInventory[inventoryIndex].get('inventory_quantity')) - parseInt(item?.quantity),
-        );
-      }
-      rowsInventory[inventoryIndex].save();
-    }
-  });
+  // const sheetInventory = (await getDoc('product_inventories')) as GoogleSpreadsheetWorksheet;
+  // const rowsInventory = await sheetInventory.getRows();
+  // items.forEach(async (item) => {
+  //   if (item.inventory_id) {
+  //     console.log('item.inventory_id', item.inventory_id);
+  //     const inventoryIndex = rowsInventory.findIndex(
+  //       (inventory) => inventory.get('id').toString() === item.inventory_id,
+  //     );
+  //     if (inventoryIndex !== -1) {
+  //       rowsInventory[inventoryIndex].set(
+  //         'inventory_quantity',
+  //         parseInt(rowsInventory[inventoryIndex].get('inventory_quantity')) - parseInt(item?.quantity),
+  //       );
+  //     }
+  //     rowsInventory[inventoryIndex].save();
+  //   }
+  // });
 
   await sheetDetail.addRows(orderDetail);
 
