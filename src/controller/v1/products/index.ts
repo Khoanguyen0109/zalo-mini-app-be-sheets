@@ -51,49 +51,61 @@ export async function getProductDetail(req, res, next) {
   const array = await sheet.getRows();
   const doc = array.find((item) => item.get('id') === id);
   if (doc) {
-    const sheetDetail = (await getDoc('product_inventories')) as GoogleSpreadsheetWorksheet;
-    const arrayDetail = await sheetDetail.getRows();
+    if (doc.get('has_inventories')) {
+      const sheetDetail = (await getDoc('product_inventories')) as GoogleSpreadsheetWorksheet;
+      const arrayDetail = await sheetDetail.getRows();
 
-    const detail = arrayDetail.filter((item) => item.get('product_id') === id);
-    const groupVariants = detail.reduce((acc, item) => {
-      const object = omit(item.toObject(), [
-        'id',
-        'product_id',
-        'inventory_quantity',
-        'discount',
-        'price',
-        'image',
-        'active',
-        'created_at',
-        'updated_at',
-        'deleted_at',
-      ]);
+      const detail = arrayDetail.filter((item) => item.get('product_id') === id);
+      const groupVariants = detail.reduce((acc, item) => {
+        const object = omit(item.toObject(), [
+          'id',
+          'product_id',
+          'inventory_quantity',
+          'discount',
+          'price',
+          'image',
+          'active',
+          'created_at',
+          'updated_at',
+          'deleted_at',
+        ]);
 
-      for (const [key, value] of Object.entries(object)) {
-        if (value !== '') {
-          if (acc[key]) {
-            if (!acc[key].includes(value)) {
-              acc[key].push(value);
+        for (const [key, value] of Object.entries(object)) {
+          if (value !== '') {
+            if (acc[key]) {
+              if (!acc[key].includes(value)) {
+                acc[key].push(value);
+              }
+            } else {
+              acc[key] = [value];
             }
-          } else {
-            acc[key] = [value];
           }
         }
-      }
 
-      return acc;
-    }, {});
-    return res.status(200).json({
-      data: {
-        ...doc.toObject(),
-        image: doc
-          .get('image')
-          .split(',')
-          .map((item) => ({ image: item })),
-        inventories: mapArray(detail),
-        variants: groupVariants,
-      },
-    });
+        return acc;
+      }, {});
+      return res.status(200).json({
+        data: {
+          ...doc.toObject(),
+          image: doc
+            .get('image')
+            .split(',')
+            .map((item) => ({ image: item })),
+          inventories: mapArray(detail),
+          variants: groupVariants,
+        },
+      });
+    } else {
+      return res.status(200).json({
+        data: {
+          ...doc.toObject(),
+          image: doc
+            .get('image')
+            .split(',')
+            .map((item) => ({ image: item })),
+        },
+      });
+    }
   }
   return res.status(404).json({ message: 'Not Found' });
 }
