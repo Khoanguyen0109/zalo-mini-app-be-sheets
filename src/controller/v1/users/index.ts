@@ -85,7 +85,7 @@ export async function updateCTVIdForUser(req, res, next) {
   const { ctvId, user } = req.body;
   const sheet = (await getDoc('users')) as GoogleSpreadsheetWorksheet;
   const rows = await sheet.getRows();
-  const dataIndex = rows.findIndex((item) => item.get('id') === userId && item.get('id') === userId);
+  const dataIndex = rows.findIndex((item) => item.get('id') === userId);
   if (dataIndex !== -1) {
     if (!rows[dataIndex].get('id_ctv_shared') && userId !== ctvId) {
       rows[dataIndex].set('id_ctv_shared', ctvId);
@@ -109,9 +109,7 @@ export async function updateFollowed(req, res, next) {
   const { userId } = req.params;
   const sheet = (await getDoc('users')) as GoogleSpreadsheetWorksheet;
   const rows = await sheet.getRows();
-  const dataIndex = rows.findIndex(
-    (item) => item.get('id') === userId && item.get('id') === userId && !item.get('followed'),
-  );
+  const dataIndex = rows.findIndex((item) => item.get('id') === userId && !item.get('followed'));
   if (dataIndex) {
     rows[dataIndex].set('followed', true);
   }
