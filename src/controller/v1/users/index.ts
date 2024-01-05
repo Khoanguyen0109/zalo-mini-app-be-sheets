@@ -104,3 +104,16 @@ export async function updateCTVIdForUser(req, res, next) {
   // save updates on a row
   return res.status(200).json({ data: 'success' });
 }
+
+export async function updateFollowed(req, res, next) {
+  const { userId } = req.params;
+  const sheet = (await getDoc('users')) as GoogleSpreadsheetWorksheet;
+  const rows = await sheet.getRows();
+  const dataIndex = rows.findIndex(
+    (item) => item.get('id') === userId && item.get('id') === userId && !item.get('followed'),
+  );
+  if (dataIndex) {
+    rows[dataIndex].set('followed', true);
+  }
+  return res.status(200).json({ data: 'success' });
+}

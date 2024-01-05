@@ -103,6 +103,8 @@ export async function getProductDetail(req, res, next) {
             .get('image')
             .split(',')
             .map((item) => ({ image: item })),
+          inventories: [],
+          variants: [],
         },
       });
     }
