@@ -112,6 +112,7 @@ export async function updateFollowed(req, res, next) {
   const dataIndex = rows.findIndex((item) => item.get('id') === userId && !item.get('followed'));
   if (dataIndex) {
     rows[dataIndex].set('followed', true);
+    await rows[dataIndex].save();
   }
   return res.status(200).json({ data: 'success' });
 }
