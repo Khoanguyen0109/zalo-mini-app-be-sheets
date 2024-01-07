@@ -17,6 +17,7 @@ export async function getProducts(req, res, next) {
 
   const sheet = (await getDoc('products')) as GoogleSpreadsheetWorksheet;
   let data = [];
+  const rows = await sheet.getRows();
   const total = sheet?.gridProperties?.rowCount - 1;
   if (total) {
     switch (true) {
@@ -25,7 +26,7 @@ export async function getProducts(req, res, next) {
         data = fullTextSearch(array, query);
         break;
       case Boolean(categories):
-        data = (await sheet.getRows()).filter((item) => item.get('category_id'));
+        data = rows.filter((item) => item.get('category_id'));
         break;
       case isNumber(offset) && isNumber(limit):
         data = await sheet.getRows({ offset: offset, limit: limit });
@@ -35,8 +36,8 @@ export async function getProducts(req, res, next) {
         break;
     }
   }
-
-  return res.status(200).json({ data: data.map((item) => mapProduct(item)), total });
+  const hotProducts = rows.filter((item) => item.get('level') === 'Hot');
+  return res.status(200).json({ data: data.map((item) => mapProduct(item)), total, hotProducts: hotProducts });
 }
 
 export async function getProductDetail(req, res, next) {
