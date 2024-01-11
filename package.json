@@ -29,7 +29,7 @@
     "express-respond": "^1.6.1",
     "express-validator": "^7.0.1",
     "google-auth-library": "^9.0.0",
-    "google-spreadsheet": "^4.1.0",
+    "google-spreadsheet": "^4.1.1",
     "husky": "^8.0.3",
     "lodash": "^4.17.21",
     "luxon": "^3.4.3",
