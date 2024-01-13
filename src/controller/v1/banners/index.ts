@@ -6,3 +6,9 @@ export async function getBanners(req, res, next) {
   const data = (await sheet.getRows()).map((item) => item.toObject());
   return res.status(200).json({ data });
 }
+
+export async function getScoreRank(req, res, next) {
+  const sheet = (await getDoc('score')) as GoogleSpreadsheetWorksheet;
+  const data = (await sheet.getRows()).map((item) => item.toObject());
+  return res.status(200).json({ data });
+}
