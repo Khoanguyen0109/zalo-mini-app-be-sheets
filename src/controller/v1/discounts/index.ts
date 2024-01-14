@@ -6,9 +6,9 @@ export async function validateVoucher(req, res, next) {
   const { voucher } = req.body;
   const sheet = (await getDoc('discount')) as GoogleSpreadsheetWorksheet;
   const data = (await sheet.getRows()).find((item) => item.get('voucher') === voucher).toObject();
-  const now = DateTime.now();
+  const now = new DateTime.now();
 
-  if (!data || (data.expired && DateTime(new Date(data.expired)) < now)) {
+  if (!data || (data.expired && new DateTime(data.expired) < now)) {
     return res.status(404).json({ message: 'Not Found' });
   }
   return res.status(200).json({ data });
