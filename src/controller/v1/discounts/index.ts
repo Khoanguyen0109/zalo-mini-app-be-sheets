@@ -8,5 +8,5 @@ export async function validateVoucher(req, res, next) {
   if (!data) {
     return res.status(404).json({ message: 'Not Found' });
   }
-  return data;
+  return res.status(200).json({ data });
 }
