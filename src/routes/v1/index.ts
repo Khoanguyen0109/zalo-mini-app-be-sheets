@@ -8,6 +8,8 @@ import carts from './carts';
 import banners from './banners';
 import bank from './bank';
 import discount from './discount';
+import expressAsyncHandler from 'express-async-handler';
+import { getSettings } from 'controller/set';
 
 const router = Router();
 
@@ -20,5 +22,7 @@ router.use('/banners', banners);
 router.use('/banners', banners);
 router.use('/discount', discount);
 router.use('/bank-info', bank);
+
+router.get('/settings', expressAsyncHandler(getSettings));
 
 export default router;
