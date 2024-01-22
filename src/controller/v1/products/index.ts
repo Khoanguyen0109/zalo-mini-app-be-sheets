@@ -36,7 +36,7 @@ export async function getProducts(req, res, next) {
         break;
     }
   }
-  const hotProducts = rows.filter((item) => item.get('level') === 'Hot').map((item) => item.toObject());
+  const hotProducts = rows.filter((item) => item.get('level') === 'Hot').map((item) => mapProduct(item));
   return res.status(200).json({ data: data.map((item) => mapProduct(item)), total, hotProducts: hotProducts });
 }
 
