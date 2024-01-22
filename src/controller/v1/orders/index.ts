@@ -48,7 +48,7 @@ export async function getOrdersByUser(req, res) {
 
   const total = sheet.gridProperties.rowCount;
 
-  return res.status(200).json({ data: data.map((item) => mapProduct(item)), total });
+  return res.status(200).json({ data: data.map((item) => item.toObject()), total });
 }
 
 export async function getOrderDetail(req, res, next) {
