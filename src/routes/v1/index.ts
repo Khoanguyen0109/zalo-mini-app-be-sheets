@@ -19,7 +19,6 @@ router.use('/orders', orders);
 router.use('/users', users);
 router.use('/users', carts);
 router.use('/banners', banners);
-router.use('/banners', banners);
 router.use('/discount', discount);
 router.use('/bank-info', bank);
 

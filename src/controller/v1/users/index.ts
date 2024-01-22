@@ -74,9 +74,7 @@ export async function feedback(req, res, next) {
 export async function getNotification(req, res, next) {
   const { userId } = req.params;
   const sheet = (await getDoc('noti')) as GoogleSpreadsheetWorksheet;
-  const data = (await sheet.getRows())
-    .filter((item) => item.get('user_id') === userId && item.get('status') === 'actived')
-    .map((item) => item.toObject());
+  const data = (await sheet.getRows()).filter((item) => item.get('user_id') === userId).map((item) => item.toObject());
   return res.status(200).json({ data: data });
 }
 
