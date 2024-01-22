@@ -83,7 +83,20 @@ export async function getOrderDetail(req, res, next) {
 async function updateInventory(sheet) {}
 
 export async function createOrder(req, res, next) {
-  const { orderId: orderIdParams, userId, discountId, items, user, total, paymentMethod, addressId, note } = req.body;
+  const {
+    orderId: orderIdParams,
+    userId,
+    discountId,
+    items,
+    user,
+    total,
+    paymentMethod,
+    addressId,
+    note,
+    preTotal,
+    voucher,
+    discount,
+  } = req.body;
   const orderId = orderIdParams || nanoid();
 
   const sheetUser = (await getDoc('users')) as GoogleSpreadsheetWorksheet;
@@ -112,6 +125,9 @@ export async function createOrder(req, res, next) {
     address_id: addressId,
     created_at: getCurrentDateWithTimezone(),
     status: 'waiting',
+    pre_total: preTotal,
+    discount,
+    voucher,
   };
 
   await sheet.addRow(row);
@@ -149,7 +165,7 @@ export async function createOrder(req, res, next) {
 export async function ratingOrder(req, res, next) {
   const { userId, orderId } = req.params;
   const { rating } = req.body;
-  console.log('rating', rating)
+  console.log('rating', rating);
   const sheet = (await getDoc('orders')) as GoogleSpreadsheetWorksheet;
 
   const array = await sheet.getRows();
